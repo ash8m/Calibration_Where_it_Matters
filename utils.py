@@ -6,18 +6,15 @@ The file contains the following utility functions for the application:
     log - Function to print and/or log messages to the console or logging file.
     str_to_bool - Function to convert an input string to a boolean value.
     set_random_seed - Function used to set the random seed for all libraries used to generate random numbers.
-    get_device - Function used to set the device that will be used for training and testing.
 """
 
 
 # Built-in/Generic Imports
 import os
-import random
 from argparse import ArgumentTypeError, Namespace
 
 # Library Imports
-import torch
-import numpy as np
+from lightning import seed_everything
 
 
 __author__    = ["Jacob Carse"]
@@ -77,30 +74,6 @@ def set_random_seed(seed: int) -> None:
     :param seed: Integer for the seed that will be used.
     """
 
-    # Sets the seed for the inbuilt Python functions.
-    random.seed(seed)
-    os.environ["PYTHONHASHSEED"] = str(seed)
+    # Sets the seed for all libraries.
+    seed_everything(seed)
 
-    # Sets the seed for the NumPy library.
-    np.random.seed(seed)
-
-    # Sets the seed for the PyTorch library.
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.backends.cudnn.deterministic = True
-
-
-def get_device(arguments: Namespace) -> torch.device:
-    """
-    Sets the device that will be used for training and testing.
-    :param arguments: A ArgumentParser Namespace containing gpu.
-    :return: A PyTorch device.
-    """
-
-    # Checks if the GPU is available to be used and sets the device.
-    if arguments.use_gpu and torch.cuda.is_available():
-        return torch.device(f"cuda:{0}")
-
-    # Sets the device to CPU.
-    else:
-        return torch.device("cpu")

@@ -13,7 +13,7 @@ import warnings
 # Own Modules Imports
 # TODO from test import test_classifier
 from train import train_classifier
-from utils import log, set_random_seed, get_device
+from utils import log, set_random_seed
 from config import load_configurations, print_arguments
 
 
@@ -45,18 +45,14 @@ if __name__ == "__main__":
         set_random_seed(arguments.seed)
         log(arguments, f"Set Random Seed to {arguments.seed}")
 
-    # Sets the default device to be used.
-    device = get_device(arguments)
-    log(arguments, f"Device set to {device}\n")
-
     # Trains a CNN model.
     if arguments.task.lower() == "train":
-        train_classifier(arguments, device)
+        train_classifier(arguments)
 
     # Tests a CNN model.
     elif arguments.task.lower() == "test":
         pass
-        # TODO test_cnn(arguments, device)
+        # TODO test_cnn(arguments)
 
     else:
         log(arguments, "Enter a valid task. \"train\" or \"test\"")

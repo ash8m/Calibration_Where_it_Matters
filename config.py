@@ -99,6 +99,9 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--data_workers", type=int,
                                  default=int(config_parser["performance"]["data_workers"]),
                                  help="Integer - How many data workers should be used to load the data.")
+    argument_parser.add_argument("--mixed_precision", type=int,
+                                 default=config_parser["performance"]["mixed_precision"].lower() == "true",
+                                 help="Boolean - Should training use 16 bit mixed precision.")
 
     # Model Arguments
     argument_parser.add_argument("--efficient_net", type=int,
@@ -112,6 +115,12 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--batch_size", type=int,
                                  default=int(config_parser["training"]["batch_size"]),
                                  help="Integer - Size of the batches used during training, (double for testing).")
+    argument_parser.add_argument("--minimum_lr", type=float,
+                                 default=float(config_parser["training"]["minimum_lr"]),
+                                 help="Float - Value for the minimum learning rate during training.")
+    argument_parser.add_argument("--maximum_lr", type=float,
+                                 default=float(config_parser["training"]["maximum_lr"]),
+                                 help="Float - Value for the maximum learning rate during training.")
 
     # Debug Arguments
     argument_parser.add_argument("--warning", type=str_to_bool,
