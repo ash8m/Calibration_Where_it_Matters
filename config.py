@@ -97,6 +97,14 @@ def load_configurations(description: str) -> Namespace:
                                  default=config_parser["performance"]["use_gpu"].lower() == "true",
                                  help="Boolean - Should training and testing use GPU acceleration.")
 
+    # Model Arguments
+    argument_parser.add_argument("--efficient_net", type=int,
+                                 default=int(config_parser["model"]["efficient_net"]),
+                                 help="Integer - The compound coefficient of the efficient net encoder.")
+    argument_parser.add_argument("--swin_model", type=str_to_bool,
+                                 default=config_parser["model"]["swin_model"].lower() == "true",
+                                 help="Boolean - Should the SWIN model be used instead of EfficientNet.")
+
     # Debug Arguments
     argument_parser.add_argument("--warning", type=str_to_bool,
                                  default=config_parser["debug"]["warning"].lower() == "true",
