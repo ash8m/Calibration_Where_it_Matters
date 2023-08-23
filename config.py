@@ -104,6 +104,9 @@ def load_configurations(description: str) -> Namespace:
                                  help="Boolean - Should training use 16 bit mixed precision.")
 
     # Model Arguments
+    argument_parser.add_argument("--model_dir", type=str,
+                                 default=config_parser["model"]["model_dir"],
+                                 help="String - Directory path for where the models will be saved.")
     argument_parser.add_argument("--efficient_net", type=int,
                                  default=int(config_parser["model"]["efficient_net"]),
                                  help="Integer - The compound coefficient of the efficient net encoder.")
@@ -112,6 +115,9 @@ def load_configurations(description: str) -> Namespace:
                                  help="Boolean - Should the SWIN model be used instead of EfficientNet.")
 
     # Training Arguments
+    argument_parser.add_argument("--epochs", type=int,
+                                 default=int(config_parser["training"]["epochs"]),
+                                 help="Integer - Number of epochs to be run during training.")
     argument_parser.add_argument("--batch_size", type=int,
                                  default=int(config_parser["training"]["batch_size"]),
                                  help="Integer - Size of the batches used during training, (double for testing).")
@@ -129,6 +135,9 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--detect_anomaly", type=str_to_bool,
                                  default=config_parser["debug"]["detect_anomaly"].lower() == "true",
                                  help="Boolean - Should Autograd anomaly detection be used.")
+    argument_parser.add_argument("--batches_per_epoch", type=int,
+                                 default=int(config_parser["debug"]["batches_per_epoch"]),
+                                 help="Integer - The number of batches to be run per epoch.")
 
     # Returns the argument parser.
     return argument_parser.parse_args()

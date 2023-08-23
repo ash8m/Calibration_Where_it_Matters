@@ -13,9 +13,10 @@ from time import time
 from argparse import Namespace
 
 # Library Imports
+import tqdm
 import torch
 import lightning as L
-from torch.cuda import amp
+from torch.nn import functional as F
 from torch.utils.data import DataLoader
 from torch.optim import SGD, lr_scheduler
 
@@ -93,3 +94,100 @@ def train_classifier(arguments: Namespace) -> None:
     classifier, optimiser = fabric.setup(classifier, optimiser)
 
     log(arguments, "Model Initialised")
+
+    # Declares the main logging variables for training.
+    start_time = time()
+    best_loss, best_epoch = 1e10, 0
+
+    # The beginning of the main training loop.
+    for epoch in range(1, arguments.epochs + 1):
+        # Declares the logging variables for the training epoch.
+        epoch_acc, epoch_loss, epoch_batches = 0., 0., 0
+
+        # Loops through the training data batches.
+        with tqdm.tqdm(train_data_loader, unit="batch") as tepoch:
+            for images, labels in tepoch:
+                tepoch.set_description(f"Epoch {epoch}")
+
+                # Resets the gradients in the model.
+                optimiser.zero_grad()
+
+                # Performs forward propagation using the classifier model.
+                predictions = classifier(images).view(images.shape[0])
+
+                # Calculates the binary cross entropy loss.
+                loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
+
+                # Performs backward propagation with the loss.
+                fabric.backward(loss)
+
+                # Updates the parameters of the model using the optimiser.
+                optimiser.step()
+
+                # Updates the learning rate scheduler.
+                scheduler.step()
+
+                # Calculates the accuracy of the batch.
+                batch_accuracy = ((torch.round(predictions) == labels).sum().double() /labels.shape[0])
+
+                # Adds the number of batches, losses and accuracy to the epoch sum.
+                epoch_batches += 1
+                epoch_loss += loss.item()
+                epoch_acc += batch_accuracy.item()
+
+                # Logs the loss and accuracy of the batch
+                tepoch.set_postfix(loss=epoch_loss / epoch_batches, accuracy=epoch_acc / epoch_batches)
+
+                # If the number of batches have been reached end training.
+                if epoch_batches == arguments.batches_per_epoch:
+                    break
+
+        # Declares the logging variables for the validation epoch.
+        val_acc, val_loss, val_batches = 0., 0., 0
+
+        # Loops through the validation data batches with no gradient calculations.
+        with torch.no_grad():
+            with tqdm.tqdm(valid_data_loader, unit="batch") as tepoch:
+                for images, labels in tepoch:
+                    tepoch.set_description(f"Validation Epoch {epoch}")
+
+                    # Performs forward propagation using the CNN model.
+                    predictions = classifier(images).view(images.shape[0])
+
+                    # Calculates the cross entropy loss.
+                    loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
+
+                    # Calculates the accuracy of the batch.
+                    batch_accuracy = ((torch.round(predictions) == labels).sum().double() /
+                                      labels.shape[0])
+
+                    # Adds the number of batches, losses and accuracy to the epoch sum.
+                    val_batches += 1
+                    val_loss += loss.item()
+                    val_acc += batch_accuracy.item()
+
+                    # If the number of batches have been reached end validation.
+                    if val_batches == arguments.batches_per_epoch:
+                        break
+
+        # Logs the details of the training epoch.
+        log(arguments, "Epoch: {}\tTime: {:.1f}s\tTraining Loss: {:.6f}\tTraining Accuracy: {:.6f}\n"
+                       "Validation Loss: {:.6f}\tValidation Accuracy: {:.6f}\n".format(
+                       epoch, time() - start_time, epoch_loss / epoch_batches, epoch_acc / epoch_batches,
+                       val_loss / val_batches, val_acc / val_batches))
+
+        # If the current epoch has the best validation loss then save the model.
+        if val_loss / val_batches < best_loss:
+            best_loss = val_loss / val_batches
+            best_epoch = epoch
+
+            # Checks if the save directory exists and if not create it.
+            os.makedirs(arguments.model_dir, exist_ok=True)
+
+            # Saves the model to the save directory.
+            model_name = f"{arguments.experiment}_{arguments.dataset}.pt"
+            torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, model_name))
+
+    # Logs final training information.
+    log(arguments, f"Training finished with best loss of {round(best_loss, 4)} at epoch {best_epoch} in "
+                   f"{int(time() - start_time)}s.")
