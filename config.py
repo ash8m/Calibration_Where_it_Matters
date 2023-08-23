@@ -76,6 +76,21 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--dataset", type=str,
                                  default=config_parser["dataset"]["dataset"].lower(),
                                  help="String - Dataset to be used.")
+    argument_parser.add_argument("--dataset_dir", type=str,
+                                 default=config_parser["dataset"]["dataset_dir"],
+                                 help="String - Directory path for where the dataset files are stored.")
+    argument_parser.add_argument("--image_x", type=int,
+                                 default=int(config_parser["dataset"]["image_x"]),
+                                 help="Integer - Width of the image that should be resized to.")
+    argument_parser.add_argument("--image_y", type=int,
+                                 default=int(config_parser["dataset"]["image_y"]),
+                                 help="Integer - Height of the image that should be resized to.")
+    argument_parser.add_argument("--val_split", type=float,
+                                 default=float(config_parser["dataset"]["val_split"]),
+                                 help="Float - Percentage of data to be used for validation.")
+    argument_parser.add_argument("--test_split", type=float,
+                                 default=float(config_parser["dataset"]["test_split"]),
+                                 help="Float - Percentage of data to be used for testing.")
 
     # Performance Arguments
     argument_parser.add_argument("--use_gpu", type=str_to_bool,
