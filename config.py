@@ -96,6 +96,9 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--use_gpu", type=str_to_bool,
                                  default=config_parser["performance"]["use_gpu"].lower() == "true",
                                  help="Boolean - Should training and testing use GPU acceleration.")
+    argument_parser.add_argument("--data_workers", type=int,
+                                 default=int(config_parser["performance"]["data_workers"]),
+                                 help="Integer - How many data workers should be used to load the data.")
 
     # Model Arguments
     argument_parser.add_argument("--efficient_net", type=int,
@@ -105,10 +108,18 @@ def load_configurations(description: str) -> Namespace:
                                  default=config_parser["model"]["swin_model"].lower() == "true",
                                  help="Boolean - Should the SWIN model be used instead of EfficientNet.")
 
+    # Training Arguments
+    argument_parser.add_argument("--batch_size", type=int,
+                                 default=int(config_parser["training"]["batch_size"]),
+                                 help="Integer - Size of the batches used during training, (double for testing).")
+
     # Debug Arguments
     argument_parser.add_argument("--warning", type=str_to_bool,
                                  default=config_parser["debug"]["warning"].lower() == "true",
                                  help="Boolean - Should warnings be shown during the running of the application.")
+    argument_parser.add_argument("--detect_anomaly", type=str_to_bool,
+                                 default=config_parser["debug"]["detect_anomaly"].lower() == "true",
+                                 help="Boolean - Should Autograd anomaly detection be used.")
 
     # Returns the argument parser.
     return argument_parser.parse_args()
