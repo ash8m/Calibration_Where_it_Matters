@@ -128,6 +128,17 @@ def load_configurations(description: str) -> Namespace:
                                  default=float(config_parser["training"]["maximum_lr"]),
                                  help="Float - Value for the maximum learning rate during training.")
 
+    # Calibration Arguments
+    argument_parser.add_argument("--calibration_method", type=str,
+                                 default=config_parser["calibration"]["calibration_method"],
+                                 help="String - Method used for calibration.")
+    argument_parser.add_argument("--boundary_calibration", type=str_to_bool,
+                                 default=config_parser["calibration"]["boundary_calibration"].lower() == "true",
+                                 help="Boolean - Should calibration happen on the boundary.")
+    argument_parser.add_argument("--calibration_verbose", type=str_to_bool,
+                                 default=config_parser["calibration"]["calibration_verbose"].lower() == "true",
+                                 help="Boolean - Should the calibration optimisation be verbose.")
+
     # Debug Arguments
     argument_parser.add_argument("--warning", type=str_to_bool,
                                  default=config_parser["debug"]["warning"].lower() == "true",
