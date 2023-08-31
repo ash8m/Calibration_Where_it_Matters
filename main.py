@@ -11,7 +11,7 @@ Executable for experiments for Calibration Where it Matters.
 import warnings
 
 # Own Modules Imports
-# TODO from test import test_classifier
+from test import test_classifier
 from train import train_classifier
 from utils import log, set_random_seed
 from config import load_configurations, print_arguments
@@ -51,8 +51,7 @@ if __name__ == "__main__":
 
     # Tests a CNN model.
     elif arguments.task.lower() == "test":
-        pass
-        # TODO test_cnn(arguments)
+        test_classifier(arguments)
 
     else:
         log(arguments, "Enter a valid task. \"train\" or \"test\"")
