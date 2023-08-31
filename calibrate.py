@@ -41,7 +41,7 @@ class TemperatureScaling:
         self.verbose = verbose
         self.temperature = None
 
-    def train(self, logits: torch.Tensor, labels: torch.Tensor) -> None:
+    def train(self, logits: np.ndarray, labels: np.ndarray) -> None:
         """
         With the provided logits and labels will learn a temperature parameter to calibrate the model.
         :param logits:
@@ -57,11 +57,13 @@ class TemperatureScaling:
             """
 
             logits, labels = args
-            logits = logits / temperature[0]
-            return F.binary_cross_entropy_with_logits(logits, labels).item()
+            epsilon = 1e-7
+            logits = np.clip(logits, epsilon, 1 - epsilon)
+            loss = -np.mean(labels * np.log(logits) + (1 - labels) * np.log(1 - logits))
+            return loss
 
         self.temperature = optimize.minimize(negative_log_loss, 1.0, args=(logits, labels), method="L-BFGS-B",
-                                             bounds=((0.05, 5.0),), tol=1e-12, options={"disp": self.verbose}).x[0]
+                                             bounds=((0.05, 5.0),), tol=1e-15, options={"disp": self.verbose}).x[0]
 
     def __call__(self, logits: torch.Tensor) -> torch.Tensor:
         """

@@ -106,7 +106,7 @@ def test_classifier(arguments: Namespace):
                 if batch_count == arguments.batches_per_epoch:
                     break
 
-        calibrator = calibrate_model(arguments, logit_list, label_list)
+        calibrator = calibrate_model(arguments, logit_list.cpu().numpy(), label_list.cpu().numpy())
 
         log(arguments, "Calibrated Model")
 
