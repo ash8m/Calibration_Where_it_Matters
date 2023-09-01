@@ -49,7 +49,7 @@ class TemperatureScaling:
         """
 
         # Sets the initial temperature parameter.
-        temperature = torch.nn.Parameter(torch.ones(1))
+        temperature = torch.nn.Parameter(torch.ones(1, device=logits.device))
 
         # Creates the temperature optimiser.
         temp_optimiser = torch.optim.LBFGS([temperature], lr=0.02, max_iter=1000, line_search_fn="strong_wolfe")
@@ -60,8 +60,9 @@ class TemperatureScaling:
             :return: PyTorch Tensor for temperature scaling loss.
             """
 
-            temp_loss = F.binary_cross_entropy_with_logits(torch.div(logits, temperature), labels)
+            temp_loss = F.binary_cross_entropy_with_logits(torch.div(logits, temperature), labels.float())
             temp_loss.backward()
+
             return temp_loss
 
         # Uses the optimiser to optimise the eval function.

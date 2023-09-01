@@ -152,4 +152,4 @@ def test_classifier(arguments: Namespace):
 
     # Outputs the output DataFrame to a csv file.
     output_name = f"{arguments.experiment}_{arguments.dataset}.csv"
-    data_frame.to_csv(os.path.join(arguments.output_dir, output_name))
+    data_frame.to_csv(os.path.join(arguments.output_dir, output_name), index=False)

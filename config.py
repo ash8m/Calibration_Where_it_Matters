@@ -71,6 +71,9 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--log_dir", type=str,
                                  default=config_parser["logging"]["log_dir"],
                                  help="String - Directory path for where log files are stored.")
+    argument_parser.add_argument("--output_dir", type=str,
+                                 default=config_parser["logging"]["output_dir"],
+                                 help="String - Directory path for where output files are stored.")
 
     # Dataset Arguments
     argument_parser.add_argument("--dataset", type=str,
