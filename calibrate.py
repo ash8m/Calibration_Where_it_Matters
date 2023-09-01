@@ -41,29 +41,35 @@ class TemperatureScaling:
         self.verbose = verbose
         self.temperature = None
 
-    def train(self, logits: np.ndarray, labels: np.ndarray) -> None:
+    def train(self, logits: torch.Tensor, labels: torch.Tensor) -> None:
         """
         With the provided logits and labels will learn a temperature parameter to calibrate the model.
-        :param logits:
-        :param labels:
+        :param logits: PyTorch Tensor of output model logits.
+        :param labels: PyTorch Tensor of image labels.
         """
 
-        def negative_log_loss(temperature: list, *args) -> float:
+        # Sets the initial temperature parameter.
+        temperature = torch.nn.Parameter(torch.ones(1))
+
+        # Creates the temperature optimiser.
+        temp_optimiser = torch.optim.LBFGS([temperature], lr=0.02, max_iter=1000, line_search_fn="strong_wolfe")
+
+        def _eval() -> torch.Tensor:
             """
-            Get the negative log loss using the logits, labels and provided temperature parameter.
-            :param temperature:
-            :param args:
-            :return:
+            Evaluation funtion for temperature scaling optimiser.
+            :return: PyTorch Tensor for temperature scaling loss.
             """
 
-            logits, labels = args
-            epsilon = 1e-7
-            logits = np.clip(logits, epsilon, 1 - epsilon)
-            loss = -np.mean(labels * np.log(logits) + (1 - labels) * np.log(1 - logits))
-            return loss
+            temp_loss = F.binary_cross_entropy_with_logits(torch.div(logits, temperature), labels)
+            temp_loss.backward()
+            return temp_loss
 
-        self.temperature = optimize.minimize(negative_log_loss, 1.0, args=(logits, labels), method="L-BFGS-B",
-                                             bounds=((0.05, 5.0),), tol=1e-15, options={"disp": self.verbose}).x[0]
+        # Uses the optimiser to optimise the eval function.
+        temp_optimiser.step(_eval)
+
+        # Sets the temperature to the optimised temperature.
+        self.temperature = temperature.item()
+
 
     def __call__(self, logits: torch.Tensor) -> torch.Tensor:
         """
