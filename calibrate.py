@@ -63,6 +63,9 @@ class TemperatureScaling:
             temp_loss = F.binary_cross_entropy_with_logits(torch.div(logits, temperature), labels.float())
             temp_loss.backward()
 
+            if self.verbose:
+                print(f"{self.temperature.item()}: {temp_loss.item()}")
+
             return temp_loss
 
         # Uses the optimiser to optimise the eval function.

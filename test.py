@@ -151,5 +151,6 @@ def test_classifier(arguments: Namespace):
     data_frame = pd.DataFrame(list(zip(label_list, prediction_list)), columns=["label", "prediction"])
 
     # Outputs the output DataFrame to a csv file.
-    output_name = f"{arguments.experiment}_{arguments.dataset}.csv"
+    boundary = f"_{arguments.boundary_calibration}" if arguments.calibration_method == "temperature" else ''
+    output_name = f"{arguments.experiment}_{arguments.dataset}_{arguments.calibration_method}{boundary}.csv"
     data_frame.to_csv(os.path.join(arguments.output_dir, output_name), index=False)
