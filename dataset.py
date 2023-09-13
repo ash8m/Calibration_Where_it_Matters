@@ -179,6 +179,9 @@ def get_dataframe(arguments: Namespace) -> pd.DataFrame:
         filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
         labels = np.argmax(df.drop(columns=["image", "VASC", "UNK"], axis=1).to_numpy(), axis=1)
 
+        # Makes the label binary malignant vs benign.
+        labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
+
     # Loads the SD-260 Dataset.
     elif arguments.dataset.lower() == "sd260":
         # Reads the SD-260 dataset csv file containing filenames and labels.
@@ -191,13 +194,26 @@ def get_dataframe(arguments: Namespace) -> pd.DataFrame:
         filenames = [os.path.join(data_base, x + ".jpg") for x in df["image"].tolist()]
         labels = np.argmax(df.drop(columns=["image", "UNK"], axis=1).to_numpy(), axis=1)
 
+        # Makes the label binary malignant vs benign.
+        labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
+
+    # Loads the NCT-CRC-HE Dataset.
+    elif arguments.dataset.lower() == "nct-crc-he":
+        filenames, labels = [], []
+
+        for folder in ["ADI", "LYM", "MUC", "MUS", "NORM"]:
+            filenames += [os.path.join(arguments.dataset_dir, folder, x)
+                          for x in os.listdir(os.path.join(arguments.dataset_dir, folder))]
+        labels += [0 for _ in range(len(filenames))]
+
+        filenames += [os.path.join(arguments.dataset_dir, "TUM", x)
+                      for x in os.listdir(os.path.join(arguments.dataset_dir, "TUM"))]
+        labels += [1 for _ in range(len(filenames) - len(labels))]
+
     # Exits the program if a valid dataset has not been selected.
     else:
-        print("DATASET NOT FOUND: Select either \"ISIC\" or \"SD260\"")
+        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\" or \"NCR-CRC-HE\"")
         quit()
-
-    # Makes the label binary malignant vs benign.
-    labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
 
     # Creates a DataFrame with the filenames and labels.
     df = pd.DataFrame([filenames, labels]).transpose()
@@ -220,7 +236,7 @@ def split_dataframe(df: pd.DataFrame, val_split: float, test_split: float) -> (p
     indices = np.array(range(df.shape[0]))
 
     # Shuffles the dataset.
-    random_generator = np.random.default_rng()
+    random_generator = np.random.default_rng(seed=1111)
     random_generator.shuffle(indices)
 
     # Split data indices into training, testing and validation sets.
