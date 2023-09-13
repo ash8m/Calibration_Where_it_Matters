@@ -11,9 +11,10 @@ from argparse import Namespace
 
 # Library Imports
 import torch
-import numpy as np
-from scipy import optimize
 import torch.nn.functional as F
+
+# Own Modules
+from utils import log
 
 
 __author__    = ["Jacob Carse"]
@@ -64,7 +65,7 @@ class TemperatureScaling:
             temp_loss.backward()
 
             if self.verbose:
-                print(f"{self.temperature.item()}: {temp_loss.item()}")
+                print(f"{temperature.item()}: {temp_loss}")
 
             return temp_loss
 
@@ -102,6 +103,7 @@ def calibrate_model(arguments: Namespace, logits: torch.Tensor, labels: torch.Te
     if arguments.calibration_method == "temperature":
         calibrator = TemperatureScaling(arguments.calibration_verbose)
         calibrator.train(logits, labels)
+        log(arguments, f"Temperature: {calibrator.temperature}")
         return calibrator
 
     else:

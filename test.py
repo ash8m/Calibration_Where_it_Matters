@@ -116,7 +116,7 @@ def test_classifier(arguments: Namespace):
     # Loops through the testing data batches with no gradient calculations.
     with torch.no_grad():
         with tqdm.tqdm(test_data_loader, unit="batch") as tepoch:
-            for images. labels in tepoch:
+            for images, labels in tepoch:
                 tepoch.set_description("Testing")
 
                 # Appends the labels to the array of labels.
