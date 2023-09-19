@@ -113,9 +113,12 @@ def load_configurations(description: str) -> Namespace:
     argument_parser.add_argument("--efficient_net", type=int,
                                  default=int(config_parser["model"]["efficient_net"]),
                                  help="Integer - The compound coefficient of the efficient net encoder.")
-    argument_parser.add_argument("--swin_model", type=str_to_bool,
-                                 default=config_parser["model"]["swin_model"].lower() == "true",
-                                 help="Boolean - Should the SWIN model be used instead of EfficientNet.")
+    argument_parser.add_argument("--resnet_model", type=str_to_bool,
+                                 default=config_parser["model"]["resnet_model"].lower() == "true",
+                                 help="Boolean - Should the ResNet model be used instead of EfficientNet.")
+    argument_parser.add_argument("--resnet_layers", type=int,
+                                 default=int(config_parser["model"]["resnet_layers"]),
+                                 help="Integer - The number of layers the resnet model should use.")
 
     # Training Arguments
     argument_parser.add_argument("--epochs", type=int,

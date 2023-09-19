@@ -23,7 +23,7 @@ from torch.optim import SGD, lr_scheduler
 # Own Modules
 from utils import log
 from dataset import get_datasets
-from model import CNNClassifier, SWINClassifier
+from model import CNNClassifier, ResNetClassifier
 
 
 __author__    = ["Jacob Carse"]
@@ -72,9 +72,9 @@ def train_classifier(arguments: Namespace) -> None:
     log(arguments, "Loaded Datasets\n")
 
     # Initialises the classifier model.
-    if arguments.swin_model:
-        # Loads the SWIN Transformer model.
-        classifier = SWINClassifier()
+    if arguments.resnet_model:
+        # Loads the ResNet CNN model.
+        classifier = ResNetClassifier(arguments.resnet_layers)
     else:
         # Loads the EfficientNet CNN model.
         classifier = CNNClassifier(arguments.efficient_net)

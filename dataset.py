@@ -197,22 +197,9 @@ def get_dataframe(arguments: Namespace) -> pd.DataFrame:
         # Makes the label binary malignant vs benign.
         labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
 
-    # Loads the NCT-CRC-HE Dataset.
-    elif arguments.dataset.lower() == "nct-crc-he":
-        filenames, labels = [], []
-
-        for folder in ["ADI", "LYM", "MUC", "MUS", "NORM"]:
-            filenames += [os.path.join(arguments.dataset_dir, folder, x)
-                          for x in os.listdir(os.path.join(arguments.dataset_dir, folder))]
-        labels += [0 for _ in range(len(filenames))]
-
-        filenames += [os.path.join(arguments.dataset_dir, "TUM", x)
-                      for x in os.listdir(os.path.join(arguments.dataset_dir, "TUM"))]
-        labels += [1 for _ in range(len(filenames) - len(labels))]
-
     # Exits the program if a valid dataset has not been selected.
     else:
-        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\" or \"NCR-CRC-HE\"")
+        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\" or \"\"")
         quit()
 
     # Creates a DataFrame with the filenames and labels.

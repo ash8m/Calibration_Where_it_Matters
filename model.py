@@ -77,46 +77,53 @@ class CNNClassifier(nn.Module):
         return self.classifier(x)
 
 
-class SWINClassifier(nn.Module):
+class ResNetClassifier(nn.Module):
     """
-    Class for the Classifier model that uses an SWIN Transformer encoder.
+    Class for the Classifier model that uses an ResNet encoder.
         init - Initialiser for the model.
         forward - Performs forward propagation.
     """
 
-    def __init__(self, pretrained: bool = True) -> None:
+    def __init__(self, num_layers: int, pretrained: bool = True):
         """
         Initialiser for the model that initialises the model's layers.
-        :param class_num: The number of classes the model will be predicting.
+        :param num_layers: The number of layers the ResNet model should use.
         :param pretrained: If the pretrained weights should be loaded.
         """
 
         # Calls the super for the nn.Module.
-        super(SWINClassifier, self).__init__()
+        super(ResNetClassifier, self).__init__()
 
-        # Loads the SWIN transformer encoder.
-        self.encoder = timm.create_model("swin_base_patch4_window7_224_in22k",
-                                         pretrained=pretrained, num_classes=1)
+        # Loads the ResNet encoder.
+        self.encoder = torch.hub.load("pytorch/vision:v0.10.0", f"resnet{num_layers}", pretrained=pretrained)
 
         # Defines the hidden Fully Connected Layer.
-        self.hidden = nn.Linear(1024, 512)
+        self.hidden = nn.Linear(self.encoder.fc.in_features, 512)
 
         # Defines the output Fully Connected Layer.
         self.classifier = nn.Linear(512, 1)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor):
         """
         Performs forward propagation with the Classifier.
         :param x: Input image batch.
         :return: PyTorch Tensor of logits.
         """
 
-        # Performs forward propagation with the encoder.
-        x = self.encoder.forward_features(x)
-        x = x.mean(dim=1)
+        # ResNet Encoder Functions.
+        x = self.encoder.conv1(x)
+        x = self.encoder.bn1(x)
+        x = self.encoder.relu(x)
+        x = self.encoder.maxpool(x)
+        x = self.encoder.layer1(x)
+        x = self.encoder.layer2(x)
+        x = self.encoder.layer3(x)
+        x = self.encoder.layer4(x)
 
-        # Performs forward propagation with the hidden layer.
-        x = F.gelu(self.hidden(x))
+        # Classification Head.
+        x = self.encoder.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = F.relu(self.hidden(x))
 
         # Gets the output logits from the output layer.
         return self.classifier(x)

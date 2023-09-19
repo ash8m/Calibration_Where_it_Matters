@@ -22,7 +22,7 @@ from torch.utils.data import DataLoader
 from utils import log
 from calibrate import calibrate_model
 from dataset import Dataset, get_datasets
-from model import CNNClassifier, SWINClassifier
+from model import CNNClassifier, ResNetClassifier
 
 
 __author__    = ["Jacob Carse"]
@@ -67,7 +67,7 @@ def test_classifier(arguments: Namespace):
     # Initialises the classifier model.
     if arguments.swin_model:
         # Loads the SWIN Transformer model.
-        classifier = SWINClassifier()
+        classifier = ResNetClassifier(arguments.resnet_layers)
     else:
         # Loads the EfficientNet CNN model.
         classifier = CNNClassifier(arguments.efficient_net)
