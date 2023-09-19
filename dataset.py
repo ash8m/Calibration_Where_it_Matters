@@ -197,9 +197,23 @@ def get_dataframe(arguments: Namespace) -> pd.DataFrame:
         # Makes the label binary malignant vs benign.
         labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
 
+    # Loads the HUST-19 Dataset.
+    elif arguments.dataset.lower() == "hust19":
+        filenames, labels = [], []
+
+        # Adds the positive filenames and labels to the list of filenames and labels.
+        filenames += [os.path.join(arguments.dataset_dir, "pCT", x)
+                      for x in os.listdir(os.path.join(arguments.dataset_dir, "pCT"))]
+        labels += [1 for _ in range(len(filenames))]
+
+        # Adds the negative filenames and labels to the list of filenames and labels.
+        filenames += [os.path.join(arguments.dataset_dir, "nCT", x)
+                      for x in os.listdir(os.path.join(arguments.dataset_dir, "nCT"))]
+        labels += [0 for _ in range(len(filenames) - len(labels))]
+
     # Exits the program if a valid dataset has not been selected.
     else:
-        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\" or \"\"")
+        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\" or \"HUST19\"")
         quit()
 
     # Creates a DataFrame with the filenames and labels.

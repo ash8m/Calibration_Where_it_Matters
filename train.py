@@ -128,7 +128,7 @@ def train_classifier(arguments: Namespace) -> None:
                 scheduler.step()
 
                 # Calculates the accuracy of the batch.
-                batch_accuracy = ((torch.round(predictions) == labels).sum().double() /labels.shape[0])
+                batch_accuracy = 1 - ((torch.round(predictions) == labels).sum().double() / labels.shape[0])
 
                 # Adds the number of batches, losses and accuracy to the epoch sum.
                 epoch_batches += 1
@@ -158,8 +158,7 @@ def train_classifier(arguments: Namespace) -> None:
                     loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
 
                     # Calculates the accuracy of the batch.
-                    batch_accuracy = ((torch.round(predictions) == labels).sum().double() /
-                                      labels.shape[0])
+                    batch_accuracy = 1 - ((torch.round(predictions) == labels).sum().double() / labels.shape[0])
 
                     # Adds the number of batches, losses and accuracy to the epoch sum.
                     val_batches += 1
