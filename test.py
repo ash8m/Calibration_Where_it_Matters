@@ -65,7 +65,7 @@ def test_classifier(arguments: Namespace):
     log(arguments, "Loaded Datasets")
 
     # Initialises the classifier model.
-    if arguments.swin_model:
+    if arguments.resnet_model:
         # Loads the SWIN Transformer model.
         classifier = ResNetClassifier(arguments.resnet_layers)
     else:

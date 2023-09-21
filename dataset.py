@@ -126,15 +126,17 @@ class Dataset(data.Dataset):
         # Loads the image.
         df_row = self.df.iloc[index]
         image = Image.open(df_row["image"])
+        image = image.convert("RGB")
 
         # Augments the image if training.
         if self.mode == "train":
             image = self.augmentation(image=np.asarray(image))
             image = Image.fromarray(image)
 
-        # Crops the image to a square image.
-        if image.width != image.height and self.arguments.image_x == self.arguments.image_y:
-            image = square_image(image)
+        # Crops the image to a square image unless X-Ray image.
+        if self.arguments.dataset != "mendeley":
+            if image.width != image.height and self.arguments.image_x == self.arguments.image_y:
+                image = square_image(image)
 
         # Resizes and normalises the image.
         image = self.image_transforms(image)
@@ -198,22 +200,22 @@ def get_dataframe(arguments: Namespace) -> pd.DataFrame:
         labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
 
     # Loads the HUST-19 Dataset.
-    elif arguments.dataset.lower() == "hust19":
+    elif arguments.dataset.lower() == "mendeley":
         filenames, labels = [], []
 
         # Adds the positive filenames and labels to the list of filenames and labels.
-        filenames += [os.path.join(arguments.dataset_dir, "pCT", x)
-                      for x in os.listdir(os.path.join(arguments.dataset_dir, "pCT"))]
+        filenames += [os.path.join(arguments.dataset_dir, "PNEUMONIA", x)
+                      for x in os.listdir(os.path.join(arguments.dataset_dir, "PNEUMONIA"))]
         labels += [1 for _ in range(len(filenames))]
 
         # Adds the negative filenames and labels to the list of filenames and labels.
-        filenames += [os.path.join(arguments.dataset_dir, "nCT", x)
-                      for x in os.listdir(os.path.join(arguments.dataset_dir, "nCT"))]
+        filenames += [os.path.join(arguments.dataset_dir, "NORMAL", x)
+                      for x in os.listdir(os.path.join(arguments.dataset_dir, "NORMAL"))]
         labels += [0 for _ in range(len(filenames) - len(labels))]
 
     # Exits the program if a valid dataset has not been selected.
     else:
-        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\" or \"HUST19\"")
+        print("DATASET NOT FOUND: Select either \"ISIC\", \"SD260\" or \"mendeley\"")
         quit()
 
     # Creates a DataFrame with the filenames and labels.
