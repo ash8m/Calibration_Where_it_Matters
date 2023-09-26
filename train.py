@@ -74,10 +74,10 @@ def train_classifier(arguments: Namespace) -> None:
     # Initialises the classifier model.
     if arguments.resnet_model:
         # Loads the ResNet CNN model.
-        classifier = ResNetClassifier(arguments.resnet_layers)
+        classifier = ResNetClassifier(arguments.binary, arguments.resnet_layers)
     else:
         # Loads the EfficientNet CNN model.
-        classifier = CNNClassifier(arguments.efficient_net)
+        classifier = CNNClassifier(arguments.binary, arguments.efficient_net)
 
     # Sets the classifier to training mode.
     classifier.train()
@@ -113,10 +113,15 @@ def train_classifier(arguments: Namespace) -> None:
                 optimiser.zero_grad()
 
                 # Performs forward propagation using the classifier model.
-                predictions = classifier(images).view(images.shape[0])
+                predictions = classifier(images)
+                if arguments.binary:
+                    predictions = predictions.view(images.shape[0])
 
                 # Calculates the binary cross entropy loss.
-                loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
+                if arguments.binary:
+                    loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
+                else:
+                    loss = F.cross_entropy(predictions, labels.float())
 
                 # Performs backward propagation with the loss.
                 fabric.backward(loss)
@@ -128,7 +133,10 @@ def train_classifier(arguments: Namespace) -> None:
                 scheduler.step()
 
                 # Calculates the accuracy of the batch.
-                batch_accuracy = 1 - ((torch.round(predictions) == labels).sum().double() / labels.shape[0])
+                if arguments.binary:
+                    batch_accuracy = 1 - ((torch.round(predictions) == labels).sum().double() / labels.shape[0])
+                else:
+                    batch_accuracy = (predictions.max(dim=1)[1] == labels).sum().double() / labels.shape[0]
 
                 # Adds the number of batches, losses and accuracy to the epoch sum.
                 epoch_batches += 1
@@ -146,19 +154,27 @@ def train_classifier(arguments: Namespace) -> None:
         val_acc, val_loss, val_batches = 0., 0., 0
 
         # Loops through the validation data batches with no gradient calculations.
-        with torch.no_grad():
+        with (torch.no_grad()):
             with tqdm.tqdm(valid_data_loader, unit="batch") as tepoch:
                 for images, labels in tepoch:
                     tepoch.set_description(f"Validation Epoch {epoch}")
 
                     # Performs forward propagation using the CNN model.
-                    predictions = classifier(images).view(images.shape[0])
+                    predictions = classifier(images)
+                    if arguments.binary:
+                        predictions = predictions.view(images.shape[0])
 
                     # Calculates the cross entropy loss.
-                    loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
+                    if arguments.binary:
+                        loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
+                    else:
+                        loss = F.cross_entropy(predictions, labels.float())
 
                     # Calculates the accuracy of the batch.
-                    batch_accuracy = 1 - ((torch.round(predictions) == labels).sum().double() / labels.shape[0])
+                    if arguments.binary:
+                        batch_accuracy = 1 - ((torch.round(predictions) == labels).sum().double() / labels.shape[0])
+                    else:
+                        batch_accuracy = (predictions.max(dim=1)[1] == labels).sum().double() / labels.shape[0]
 
                     # Adds the number of batches, losses and accuracy to the epoch sum.
                     val_batches += 1
@@ -184,7 +200,7 @@ def train_classifier(arguments: Namespace) -> None:
             os.makedirs(arguments.model_dir, exist_ok=True)
 
             # Saves the model to the save directory.
-            model_name = f"{arguments.experiment}_{arguments.dataset}.pt"
+            model_name = f"{arguments.experiment}_{arguments.dataset}_{str(arguments.binary)}.pt"
             torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, model_name))
 
     # Logs final training information.

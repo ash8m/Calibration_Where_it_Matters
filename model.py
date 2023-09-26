@@ -4,12 +4,11 @@
 """
 The file for the definition of classifier model.
     CNNClassifier - Class for the EfficientNet Classifier Model.
-    SWINClassifier - Class for the SWIN Transformer Classifier Model.
+    ResNetClassifier - Class for the ResNet Classifier Model.
 """
 
 
 # Library Imports
-import timm
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
@@ -33,7 +32,7 @@ class CNNClassifier(nn.Module):
         forward - Performs forward propagation.
     """
 
-    def __init__(self, b: int = 0, pretrained: bool = True) -> None:
+    def __init__(self, binary, b: int = 0, pretrained: bool = True) -> None:
         """
         Initialiser for the model that initialises the model's layers.
         :param b: The compound coefficient of the EfficientNet model to be loaded.
@@ -56,7 +55,7 @@ class CNNClassifier(nn.Module):
         self.hidden = nn.Linear(self.encoder._fc.in_features, 512)
 
         # Defines the output Fully Connected Layer.
-        self.classifier = nn.Linear(512, 1)
+        self.classifier = nn.Linear(512, 1 if binary else 7)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -84,7 +83,7 @@ class ResNetClassifier(nn.Module):
         forward - Performs forward propagation.
     """
 
-    def __init__(self, num_layers: int, pretrained: bool = True):
+    def __init__(self, binary, num_layers: int, pretrained: bool = True):
         """
         Initialiser for the model that initialises the model's layers.
         :param num_layers: The number of layers the ResNet model should use.
@@ -101,7 +100,7 @@ class ResNetClassifier(nn.Module):
         self.hidden = nn.Linear(self.encoder.fc.in_features, 512)
 
         # Defines the output Fully Connected Layer.
-        self.classifier = nn.Linear(512, 1)
+        self.classifier = nn.Linear(512, 1 if binary else 7)
 
     def forward(self, x: torch.Tensor):
         """

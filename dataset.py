@@ -182,7 +182,8 @@ def get_dataframe(arguments: Namespace) -> pd.DataFrame:
         labels = np.argmax(df.drop(columns=["image", "VASC", "UNK"], axis=1).to_numpy(), axis=1)
 
         # Makes the label binary malignant vs benign.
-        labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
+        if arguments.binary:
+            labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
 
     # Loads the SD-260 Dataset.
     elif arguments.dataset.lower() == "sd260":
@@ -197,7 +198,8 @@ def get_dataframe(arguments: Namespace) -> pd.DataFrame:
         labels = np.argmax(df.drop(columns=["image", "UNK"], axis=1).to_numpy(), axis=1)
 
         # Makes the label binary malignant vs benign.
-        labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
+        if arguments.binary:
+            labels = np.array([1 if x in [0, 2, 6] else 0 for x in labels])
 
     # Loads the HUST-19 Dataset.
     elif arguments.dataset.lower() == "mendeley":

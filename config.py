@@ -107,6 +107,9 @@ def load_configurations(description: str) -> Namespace:
                                  help="Boolean - Should training use 16 bit mixed precision.")
 
     # Model Arguments
+    argument_parser.add_argument("--binary", type=str_to_bool,
+                                 default=config_parser["model"]["binary"].lower() == "true",
+                                 help="Boolean - Should the model make binary predictions.")
     argument_parser.add_argument("--model_dir", type=str,
                                  default=config_parser["model"]["model_dir"],
                                  help="String - Directory path for where the models will be saved.")

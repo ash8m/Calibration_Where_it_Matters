@@ -32,7 +32,7 @@ class TemperatureScaling:
 
     """
 
-    def __init__(self, verbose: bool = False) -> None:
+    def __init__(self, binary, verbose: bool = False) -> None:
         """
 
         :param verbose:
@@ -40,6 +40,7 @@ class TemperatureScaling:
 
         super(TemperatureScaling, self).__init__()
         self.verbose = verbose
+        self.binary = binary
         self.temperature = None
 
     def train(self, logits: torch.Tensor, labels: torch.Tensor) -> None:
@@ -61,7 +62,10 @@ class TemperatureScaling:
             :return: PyTorch Tensor for temperature scaling loss.
             """
 
-            temp_loss = F.binary_cross_entropy_with_logits(torch.div(logits, temperature), labels.float())
+            if self.binary:
+                temp_loss = F.binary_cross_entropy_with_logits(torch.div(logits, temperature), labels.float())
+            else:
+                temp_loss = F.cross_entropy(torch.div(logits, temperature), labels.float())
             temp_loss.backward()
 
             if self.verbose:
@@ -75,7 +79,6 @@ class TemperatureScaling:
         # Sets the temperature to the optimised temperature.
         self.temperature = temperature.item()
 
-
     def __call__(self, logits: torch.Tensor) -> torch.Tensor:
         """
         Use the calibrated temperature parameter to calibrate the predicted logits.
@@ -88,7 +91,10 @@ class TemperatureScaling:
             print("Error: need to first train before calling this function.")
 
         # Returns the softmax
-        return torch.sigmoid(logits / self.temperature)
+        if self.binary:
+            return torch.sigmoid(logits / self.temperature)
+        else:
+            return F.softmax(logits / self.temperature)
 
 
 def calibrate_model(arguments: Namespace, logits: torch.Tensor, labels: torch.Tensor) -> object:

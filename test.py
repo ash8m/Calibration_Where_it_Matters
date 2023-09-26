@@ -11,6 +11,7 @@ The file contains implementations of the functions used to test a classifier mod
 import os
 from argparse import Namespace
 
+import numpy as np
 # Library Imports
 import tqdm
 import torch
@@ -67,13 +68,13 @@ def test_classifier(arguments: Namespace):
     # Initialises the classifier model.
     if arguments.resnet_model:
         # Loads the SWIN Transformer model.
-        classifier = ResNetClassifier(arguments.resnet_layers)
+        classifier = ResNetClassifier(arguments.binary, arguments.resnet_layers)
     else:
         # Loads the EfficientNet CNN model.
-        classifier = CNNClassifier(arguments.efficient_net)
+        classifier = CNNClassifier(arguments.binary, arguments.efficient_net)
 
     # Loads the trained model.
-    model_name = f"{arguments.experiment}_{arguments.dataset}.pt"
+    model_name = f"{arguments.experiment}_{arguments.dataset}_{str(arguments.binary)}.pt"
     classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, model_name)))
 
     # Sets the classifier to testing mode.
@@ -92,12 +93,22 @@ def test_classifier(arguments: Namespace):
         with torch.no_grad():
             for images, labels in val_data_loader:
                 logits = classifier(images)
-                logits = logits.view(logits.shape[0])
+                if arguments.binary:
+                    logits = logits.view(logits.shape[0])
 
                 if arguments.boundary_calibration:
-                    indices = ((logits <= 0).nonzero(as_tuple=True)[0])
+                    if arguments.binary:
+                        indices = ((logits <= 0).nonzero(as_tuple=True)[0])
+                    else:
+                        indices = []
+                        for i in range(len(logits)):
+                            _, index = torch.max(logits[i])
+                            if index in [0, 2, 6]:
+                                indices.append(i)
+
                     label_list = torch.cat((label_list, labels[indices]))
                     logit_list = torch.cat((logit_list, logits[indices]))
+
                 else:
                     label_list = torch.cat((label_list, labels))
                     logit_list = torch.cat((logit_list, logits))
@@ -114,7 +125,7 @@ def test_classifier(arguments: Namespace):
     batch_count, prediction_list, label_list = 0, [], []
 
     # Loops through the testing data batches with no gradient calculations.
-    with torch.no_grad():
+    with (torch.no_grad()):
         with tqdm.tqdm(test_data_loader, unit="batch") as tepoch:
             for images, labels in tepoch:
                 tepoch.set_description("Testing")
@@ -123,13 +134,18 @@ def test_classifier(arguments: Namespace):
                 label_list += list(labels.cpu().numpy())
 
                 # Performs forward propagation with the model to get the output logits.
-                logits = classifier(images).view(images.shape[0])
+                logits = classifier(images)
+                if arguments.binary:
+                    logits = logits.view(images.shape[0])
 
                 # Calibrate predictions using the calibrator or just use sigmoid.
                 if arguments.calibration_method in ["temperature"]:
                     predictions = calibrator(logits)
                 else:
-                    predictions = torch.sigmoid(logits)
+                    if arguments.binary:
+                        predictions = torch.sigmoid(logits)
+                    else:
+                        predictions = torch.nn.functional.softmax(logits)
 
                 # Moves the predictions to the CPU.
                 predictions = predictions.cpu().numpy()
@@ -148,7 +164,13 @@ def test_classifier(arguments: Namespace):
     os.makedirs(arguments.output_dir, exist_ok=True)
 
     # Creates the DataFrame from the labels and output predictions.
-    data_frame = pd.DataFrame(list(zip(label_list, prediction_list)), columns=["label", "prediction"])
+    if arguments.binary:
+        data_frame = pd.DataFrame(list(zip(label_list, prediction_list)), columns=["label", "prediction"])
+    else:
+        data_frame = pd.DataFrame(list(zip(label_list, prediction_list[:, 0], prediction_list[:, 1],
+                                           prediction_list[:, 2], prediction_list[:, 3], prediction_list[:, 4],
+                                           prediction_list[:, 5], prediction_list[:, 6])),
+                                  columns=["label", "MAL", "NV", "BCC", "AK", "BK", "DF", "SCC"])
 
     # Outputs the output DataFrame to a csv file.
     boundary = f"_{arguments.boundary_calibration}" if arguments.calibration_method == "temperature" else ''
