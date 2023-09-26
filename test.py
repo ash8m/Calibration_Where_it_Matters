@@ -74,7 +74,7 @@ def test_classifier(arguments: Namespace):
         classifier = CNNClassifier(arguments.binary, arguments.efficient_net)
 
     # Loads the trained model.
-    model_name = f"{arguments.experiment}_{arguments.dataset}_{str(arguments.binary)}.pt"
+    model_name = f"{arguments.experiment}_{arguments.dataset}.pt"
     classifier.load_state_dict(torch.load(os.path.join(arguments.model_dir, model_name)))
 
     # Sets the classifier to testing mode.
@@ -102,7 +102,7 @@ def test_classifier(arguments: Namespace):
                     else:
                         indices = []
                         for i in range(len(logits)):
-                            _, index = torch.max(logits[i])
+                            index = torch.argmax(logits[i])
                             if index in [0, 2, 6]:
                                 indices.append(i)
 
@@ -122,7 +122,8 @@ def test_classifier(arguments: Namespace):
         log(arguments, "Calibrated Model")
 
     # Defines the batch count and initialises the list of predictions and labels.
-    batch_count, prediction_list, label_list = 0, [], []
+    batch_count, label_list = 0, []
+    prediction_list = [] if arguments.binary else [[] for _ in range(7)]
 
     # Loops through the testing data batches with no gradient calculations.
     with (torch.no_grad()):
@@ -151,7 +152,12 @@ def test_classifier(arguments: Namespace):
                 predictions = predictions.cpu().numpy()
 
                 # Gets the predictive probabilities and appends them to the array of predictions.
-                prediction_list += list(predictions)
+                if arguments.binary:
+                    prediction_list += list(predictions)
+                else:
+                    for i in range(7):
+                        thing = predictions[:, i].tolist()
+                        prediction_list[i] += thing
 
                 # Adds to the current batch count.
                 batch_count += 1
@@ -167,9 +173,9 @@ def test_classifier(arguments: Namespace):
     if arguments.binary:
         data_frame = pd.DataFrame(list(zip(label_list, prediction_list)), columns=["label", "prediction"])
     else:
-        data_frame = pd.DataFrame(list(zip(label_list, prediction_list[:, 0], prediction_list[:, 1],
-                                           prediction_list[:, 2], prediction_list[:, 3], prediction_list[:, 4],
-                                           prediction_list[:, 5], prediction_list[:, 6])),
+        data_frame = pd.DataFrame(list(zip(label_list, prediction_list[0], prediction_list[1], prediction_list[2],
+                                           prediction_list[3], prediction_list[4], prediction_list[5],
+                                           prediction_list[6])),
                                   columns=["label", "MAL", "NV", "BCC", "AK", "BK", "DF", "SCC"])
 
     # Outputs the output DataFrame to a csv file.

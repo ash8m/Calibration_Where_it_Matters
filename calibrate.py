@@ -65,7 +65,7 @@ class TemperatureScaling:
             if self.binary:
                 temp_loss = F.binary_cross_entropy_with_logits(torch.div(logits, temperature), labels.float())
             else:
-                temp_loss = F.cross_entropy(torch.div(logits, temperature), labels.float())
+                temp_loss = F.cross_entropy(torch.div(logits, temperature), labels)
             temp_loss.backward()
 
             if self.verbose:
@@ -107,7 +107,7 @@ def calibrate_model(arguments: Namespace, logits: torch.Tensor, labels: torch.Te
     """
 
     if arguments.calibration_method == "temperature":
-        calibrator = TemperatureScaling(arguments.calibration_verbose)
+        calibrator = TemperatureScaling(arguments.binary, arguments.calibration_verbose)
         calibrator.train(logits, labels)
         log(arguments, f"Temperature: {calibrator.temperature}")
         return calibrator

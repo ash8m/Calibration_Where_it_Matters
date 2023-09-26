@@ -121,7 +121,7 @@ def train_classifier(arguments: Namespace) -> None:
                 if arguments.binary:
                     loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
                 else:
-                    loss = F.cross_entropy(predictions, labels.float())
+                    loss = F.cross_entropy(predictions, labels)
 
                 # Performs backward propagation with the loss.
                 fabric.backward(loss)
@@ -168,7 +168,7 @@ def train_classifier(arguments: Namespace) -> None:
                     if arguments.binary:
                         loss = F.binary_cross_entropy_with_logits(predictions, labels.float())
                     else:
-                        loss = F.cross_entropy(predictions, labels.float())
+                        loss = F.cross_entropy(predictions, labels)
 
                     # Calculates the accuracy of the batch.
                     if arguments.binary:
@@ -200,7 +200,7 @@ def train_classifier(arguments: Namespace) -> None:
             os.makedirs(arguments.model_dir, exist_ok=True)
 
             # Saves the model to the save directory.
-            model_name = f"{arguments.experiment}_{arguments.dataset}_{str(arguments.binary)}.pt"
+            model_name = f"{arguments.experiment}_{arguments.dataset}.pt"
             torch.save(classifier.state_dict(), os.path.join(arguments.model_dir, model_name))
 
     # Logs final training information.
